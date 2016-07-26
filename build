@@ -1,0 +1,105 @@
+#!/bin/bash
+
+set -euo pipefail
+
+PHP_VERSION=7.0.9
+PHP_CONFIGURE=(
+    --prefix=/usr/local/php7
+    --with-config-file-scan-dir=/usr/local/php7/etc/conf.d
+    --without-pear
+    --enable-bcmath
+    --with-bz2
+    --enable-calendar
+    --enable-intl
+    --enable-exif
+    --enable-dba
+    --enable-ftp
+    --with-gettext
+    --with-gd
+    --with-jpeg-dir
+    --enable-mbstring
+    --with-mcrypt
+    --with-mhash
+    --enable-mysqlnd
+    --with-mysql=mysqlnd
+    --with-mysql-sock=/var/run/mysqld/mysqld.sock
+    --with-mysqli=mysqlnd
+    --with-pdo-mysql=mysqlnd
+    --with-openssl
+    --enable-pcntl
+    --with-pspell
+    --enable-shmop
+    --enable-soap
+    --enable-sockets
+    --enable-sysvmsg
+    --enable-sysvsem
+    --enable-sysvshm
+    --enable-wddx
+    --with-zlib
+    --enable-zip
+    --with-readline
+    --with-curl
+    --enable-fpm
+    --with-fpm-user=www-data
+    --with-fpm-group=www-data
+)
+
+PHP_URL=http://nl.php.net/get/php-$PHP_VERSION.tar.xz/from/this/mirror
+PHP_SHA256=970c322ba3e472cb0264b8ba9d4d92e87918da5d0cca53c4aba2a70545b8626d
+PHP_FILENAME=php-$PHP_VERSION.tar.xz
+
+DEPS=(
+    build-essential
+    pkg-config
+    git-core
+    autoconf
+    bison
+    libxml2-dev
+    libbz2-dev
+    libmcrypt-dev
+    libicu-dev
+    libssl-dev
+    libcurl4-openssl-dev
+    libltdl-dev
+    libjpeg-dev
+    libpng-dev
+    libpspell-dev
+    libreadline-dev
+)
+
+say() { echo "$@" >&2; }
+say_do() { say "$@"; "$@"; }
+check_sha256() {
+    sha256=$(sha256sum "$1" 2>/dev/null | cut -f1 -d' ')
+    [[ $sha256 = $2 ]]
+}
+
+cd "$(dirname "$0")"
+
+# Install missing packages.
+sudo apt-get -qq install -y "${DEPS[@]}"
+
+# Download PHP package.
+if ! check_sha256 "$PHP_FILENAME" "$PHP_SHA256"; then
+    rm -f "$PHP_FILENAME"
+    wget -O "$PHP_FILENAME" "$PHP_URL"
+fi
+if ! check_sha256 "$PHP_FILENAME" "$PHP_SHA256"; then
+    say "Download failed, or file is corrupt: $PHP_FILENAME"
+fi
+
+# Build.
+rm -rf src
+mkdir src
+tar xf "$PHP_FILENAME" --strip-components 1 -C src
+cd src
+./configure ${PHP_CONFIGURE[@]}
+
+cpus=$(cat /proc/cpuinfo | grep processor | wc -l)
+[[ $cpus -lt 1 ]] && cpus=1
+let cpus=cpus+1
+
+make -j$cpus
+
+# Done.
+say "Now run: cd src && make install"
