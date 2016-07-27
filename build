@@ -17,6 +17,10 @@ PHP_CONFIGURE=(
     --with-gettext
     --with-gd
     --with-jpeg-dir
+    --with-png-dir
+    --with-xpm-dir
+    --with-webp-dir
+    --with-freetype-dir
     --enable-mbstring
     --with-mcrypt
     --with-mhash
@@ -49,22 +53,25 @@ PHP_SHA256=970c322ba3e472cb0264b8ba9d4d92e87918da5d0cca53c4aba2a70545b8626d
 PHP_FILENAME=php-$PHP_VERSION.tar.xz
 
 DEPS=(
-    build-essential
-    pkg-config
-    git-core
     autoconf
     bison
-    libxml2-dev
+    build-essential
+    git-core
     libbz2-dev
-    libmcrypt-dev
-    libicu-dev
-    libssl-dev
     libcurl4-openssl-dev
-    libltdl-dev
+    libfreetype6-dev
+    libicu-dev
     libjpeg-dev
+    libltdl-dev
+    libmcrypt-dev
     libpng-dev
     libpspell-dev
     libreadline-dev
+    libssl-dev
+    libwebp-dev
+    libxml2-dev
+    libxpm-dev
+    pkg-config
 )
 
 say() { echo "$@" >&2; }
